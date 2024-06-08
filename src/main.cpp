@@ -28,13 +28,13 @@ int servoPin = D0;
 char auth[] = BLYNK_AUTH_TOKEN;
 
 int delayTime = 1000;
+bool servoActivated = false;
 bool isMatch;
-char currentTime[6]; // Variable to store the current time in HH:mm format
+char currentTime[6]; 
 char blynkTime[9];
-unsigned long lastCheckTime = 0;                     // Variable to store the last time the check was performed
-const unsigned long checkInterval = 0.1 * 60 * 1000; // Check every 5 minutes
+unsigned long lastCheckTime = 0;                     
+const unsigned long checkInterval = 0.05 * 60 * 1000; 
 
-// Function to get the current time as a string in HH:mm format
 void getCurrentTimeString();
 
 void setup()
@@ -46,14 +46,13 @@ void setup()
   Serial.println(WIFI_SSID);
   Blynk.begin(auth, WIFI_SSID, WIFI_PASSWORD);
 
-  // Initialize the servo
   myservo.attach(servoPin);
   myservo.write(0);
 
   // Initialize NTP
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   Serial.println("Waiting for time");
-  delay(2000); // Wait for time to be set
+  delay(2000); 
 
   // Get the current time and store it in currentTime
   getCurrentTimeString();
@@ -89,7 +88,6 @@ BLYNK_WRITE(GRAMS_SLIDER_PIN)
   Serial.println(delayTime);
 }
 
-bool servoActivated = false;
 
 void loop()
 {
@@ -105,6 +103,7 @@ void loop()
       Serial.println("Time matches!");
       if (!servoActivated)
       {
+        Blynk.virtualWrite(SERVO_CONTROL_PIN, 1);
         myservo.write(180);
         delay(delayTime);
         myservo.write(0);
