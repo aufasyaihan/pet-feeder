@@ -8,8 +8,8 @@
 #include <BlynkSimpleEsp8266.h>
 #include <time.h>
 
-#define WIFI_SSID "RKP2"
-#define WIFI_PASSWORD "EmpatLima6"
+#define WIFI_SSID "Kayaki"
+#define WIFI_PASSWORD "aaskiiii"
 
 // NTP server to be used for time synchronization
 const char *ntpServer = "pool.ntp.org";
