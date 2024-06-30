@@ -27,13 +27,14 @@ int servoPin = D0;
 // Blynk authorization token
 char auth[] = BLYNK_AUTH_TOKEN;
 
-int delayTime = 1000;
+int delayTime = 0;
+const int GRAMS_PER_SECOND = 10;
 bool servoActivated = false;
 bool isMatch;
-char currentTime[6]; 
+char currentTime[6];
 char blynkTime[9];
-unsigned long lastCheckTime = 0;                     
-const unsigned long checkInterval = 0.05 * 60 * 1000; 
+unsigned long lastCheckTime = 0;
+const unsigned long checkInterval = 0.05 * 60 * 1000;
 
 void getCurrentTimeString();
 
@@ -52,7 +53,7 @@ void setup()
   // Initialize NTP
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   Serial.println("Waiting for time");
-  delay(2000); 
+  delay(2000);
 
   // Get the current time and store it in currentTime
   getCurrentTimeString();
@@ -81,13 +82,12 @@ BLYNK_WRITE(SERVO_CONTROL_PIN)
 BLYNK_WRITE(GRAMS_SLIDER_PIN)
 {
   int grams = param.asInt();
-  delayTime = grams * 1000;
+  delayTime = (grams * 1000) / GRAMS_PER_SECOND;
   Serial.print("Grams set to: ");
   Serial.print(grams);
   Serial.print(", Delay time set to: ");
   Serial.println(delayTime);
 }
-
 
 void loop()
 {
