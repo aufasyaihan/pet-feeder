@@ -23,18 +23,20 @@ int servoPin = D0;
 #define SERVO_CONTROL_PIN V1
 #define GRAMS_SLIDER_PIN V5
 #define TIME_INPUT_PIN V2
+#define TIME_INPUT2_PIN V3
+#define TIME_INPUT3_PIN V4
 
 // Blynk authorization token
 char auth[] = BLYNK_AUTH_TOKEN;
 
-int delayTime = 0;
+int delayTime = 1000;
 const int GRAMS_PER_SECOND = 10;
 bool servoActivated = false;
-bool isMatch;
-char currentTime[6];
-char blynkTime[9];
+bool timeProcessed = false;
+char currentTime[9];
+char blynkTime[3][9];
 unsigned long lastCheckTime = 0;
-const unsigned long checkInterval = 0.05 * 60 * 1000;
+const unsigned long checkInterval = 1000; // Check every second
 
 void getCurrentTimeString();
 
@@ -98,7 +100,16 @@ void loop()
   {
     lastCheckTime = currentMillis;
     getCurrentTimeString();
-    if (strcmp(currentTime, blynkTime) == 0)
+    bool timeMatch = false;
+    for (int i = 0; i < 3; i++)
+    {
+      if (strcmp(currentTime, blynkTime[i]) == 0)
+      {
+        timeMatch = true;
+        break;
+      }
+    }
+    if (timeMatch && !timeProcessed)
     {
       Serial.println("Time matches!");
       if (!servoActivated)
@@ -109,33 +120,50 @@ void loop()
         myservo.write(0);
         Blynk.virtualWrite(SERVO_CONTROL_PIN, 0);
         servoActivated = true;
+        timeProcessed = true; // Set the timeProcessed flag
       }
     }
-    else
+    else if (!timeMatch)
     {
       Serial.println("Time does not match.");
       servoActivated = false;
+      timeProcessed = false; // Reset the timeProcessed flag if no match
     }
   }
 }
 
-BLYNK_WRITE(TIME_INPUT_PIN)
+void handleTimeInput(BlynkParam param, int index)
 {
   int rawTime = param.asInt();
 
-  // Convert raw time (seconds since midnight) to hours and minutes
+  // Convert raw time (seconds since midnight) to hours, minutes, and seconds
   int hours = rawTime / 3600;
   int minutes = (rawTime % 3600) / 60;
+  int seconds = rawTime % 60;
 
-  // Create a string to store the formatted time
-  // Allocate space for HH:mm + null terminator
-
-  // Format the time string with leading zeros for hours and minutes (09:15)
-  snprintf(blynkTime, sizeof(blynkTime), "%02d:%02d", hours, minutes);
+  // Format the time string with leading zeros for hours, minutes, and seconds (HH:MM:SS)
+  snprintf(blynkTime[index], sizeof(blynkTime[index]), "%02d:%02d:%02d", hours, minutes, seconds);
 
   // Print the formatted time for verification (optional)
-  Serial.print("Time set to: ");
-  Serial.println(blynkTime);
+  Serial.print("Time");
+  Serial.print(index + 1);
+  Serial.print(" set to: ");
+  Serial.println(blynkTime[index]);
+}
+
+BLYNK_WRITE(TIME_INPUT_PIN)
+{
+  handleTimeInput(param, 0);
+}
+
+BLYNK_WRITE(TIME_INPUT2_PIN)
+{
+  handleTimeInput(param, 1);
+}
+
+BLYNK_WRITE(TIME_INPUT3_PIN)
+{
+  handleTimeInput(param, 2);
 }
 
 void getCurrentTimeString()
@@ -146,5 +174,5 @@ void getCurrentTimeString()
     Serial.println("Failed to obtain time");
     return;
   }
-  strftime(currentTime, sizeof(currentTime), "%H:%M", &timeinfo);
+  strftime(currentTime, sizeof(currentTime), "%H:%M:%S", &timeinfo);
 }
